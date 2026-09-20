@@ -48,25 +48,49 @@
     .source { margin-top:18px; padding:14px 18px; color:var(--muted); font-size:13px; line-height:1.55; }
     .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--good); margin-right:6px; }
     .error { color:#ff9b9b; }
-    @media (max-width: 850px) { .controls { grid-template-columns:1fr 1fr; } .main { grid-template-columns:1fr; } header { align-items:flex-start; flex-direction:column; } }
-    @media (max-width: 520px) { .controls { grid-template-columns:1fr; } .statline { grid-template-columns:1fr; } .chart-card { min-height:440px; } #bubbleChart { height:340px; } }
+
+    @media (max-width: 850px) {
+      .controls { grid-template-columns:1fr 1fr; }
+      .main { grid-template-columns:1fr; }
+      header { align-items:flex-start; flex-direction:column; }
+    }
+
+    @media (max-width: 520px) {
+      .controls { grid-template-columns:1fr; }
+      .statline { grid-template-columns:1fr; }
+      .chart-card { min-height:440px; }
+      #bubbleChart { height:340px; }
+    }
   </style>
 </head>
+
 <body>
 <div class="wrap">
+
   <header>
     <div>
       <h1>MLB Pitch Predictor</h1>
-      <p class="sub">Choose a pitcher, batter side, and count. The bubbles show how often that pitcher threw each pitch in the same situation.</p>
+      <p class="sub">
+        Choose a pitcher, batter side, and count.
+        The bubbles show how often that pitcher threw each pitch in the same situation.
+      </p>
     </div>
-    <div class="badge"><span class="status-dot"></span>Baseball Savant / Statcast</div>
+
+    <div class="badge">
+      <span class="status-dot"></span>
+      Baseball Savant / Statcast
+    </div>
   </header>
 
   <section class="panel controls">
+
     <div>
       <label for="pitcher">Pitcher</label>
-      <select id="pitcher"><option>Loading MLB pitchers…</option></select>
+      <select id="pitcher">
+        <option>Loading MLB pitchers…</option>
+      </select>
     </div>
+
     <div>
       <label>Batter bats</label>
       <div class="side-toggle" role="group" aria-label="Batter handedness">
@@ -74,47 +98,102 @@
         <button type="button" data-side="R" class="active">Right</button>
       </div>
     </div>
+
     <div>
       <label for="count">Count</label>
       <select id="count"></select>
     </div>
+
     <div>
       <label>&nbsp;</label>
       <button id="predict">Predict pitch</button>
     </div>
+
   </section>
 
   <div class="main">
+
     <section class="panel chart-card">
+
       <div class="section-title">
-        <div><h2 id="chartTitle">Pitch probabilities</h2><div id="chartSubtitle" class="muted">Select a pitcher to begin.</div></div>
+        <div>
+          <h2 id="chartTitle">Pitch probabilities</h2>
+          <div id="chartSubtitle" class="muted">
+            Select a pitcher to begin.
+          </div>
+        </div>
       </div>
-      <div id="chartEmpty" class="empty">Pick a pitcher and count, then click <strong>Predict pitch</strong>.</div>
-      <svg id="bubbleChart" viewBox="0 0 760 410" role="img" aria-label="Bubble chart of pitch probabilities" hidden></svg>
+
+      <div id="chartEmpty" class="empty">
+        Pick a pitcher and count, then click <strong>Predict pitch</strong>.
+      </div>
+
+      <svg
+        id="bubbleChart"
+        viewBox="0 0 760 410"
+        role="img"
+        aria-label="Bubble chart of pitch probabilities"
+        hidden>
+      </svg>
+
     </section>
 
     <aside class="panel side-card">
-      <div class="section-title"><h2>Situation</h2></div>
-      <div class="statline">
-        <div class="stat"><strong id="sample">—</strong><span>Exact samples</span></div>
-        <div class="stat"><strong id="topPitch">—</strong><span>Top pitch</span></div>
-        <div class="stat"><strong id="confidence">—</strong><span>Confidence</span></div>
+
+      <div class="section-title">
+        <h2>Situation</h2>
       </div>
-      <div class="section-title"><h2>Pitch mix</h2></div>
-      <div id="pitchList" class="pitch-list"><div class="muted">No prediction yet.</div></div>
+
+      <div class="statline">
+
+        <div class="stat">
+          <strong id="sample">—</strong>
+          <span>Exact samples</span>
+        </div>
+
+        <div class="stat">
+          <strong id="topPitch">—</strong>
+          <span>Top pitch</span>
+        </div>
+
+        <div class="stat">
+          <strong id="confidence">—</strong>
+          <span>Confidence</span>
+        </div>
+
+      </div>
+
+      <div class="section-title">
+        <h2>Pitch mix</h2>
+      </div>
+
+      <div id="pitchList" class="pitch-list">
+        <div class="muted">No prediction yet.</div>
+      </div>
+
     </aside>
+
   </div>
 
   <section class="panel source">
-    <strong>How it works:</strong> the backend downloads pitch-level Statcast data from Baseball Savant for the selected pitcher, filters it to the selected batter handedness and count, then calculates each pitch type's observed frequency. This is a tendency model, not a guarantee. Small samples are flagged as lower confidence.
+    <strong>How it works:</strong>
+    the backend downloads pitch-level Statcast data from Baseball Savant
+    for the selected pitcher, filters it to the selected batter handedness
+    and count, then calculates each pitch type's observed frequency.
+    This is a tendency model, not a guarantee.
+    Small samples are flagged as lower confidence.
   </section>
+
 </div>
+
 <script>
-// CHANGE THIS after deploying the API, e.g. https://mlb-pitch-predictor.onrender.com
-window.MLB_PREDICTOR_API_BASE = "https://YOUR-API-URL-HERE";
+window.MLB_PREDICTOR_API_BASE =
+  "https://mlb-pitch-predictor-api.onrender.com";
 </script>
+
 <script>
 (() => {
+
   const pitcherEl = document.getElementById('pitcher');
   const countEl = document.getElementById('count');
   const predictBtn = document.getElementById('predict');
@@ -126,104 +205,480 @@ window.MLB_PREDICTOR_API_BASE = "https://YOUR-API-URL-HERE";
   const sample = document.getElementById('sample');
   const topPitch = document.getElementById('topPitch');
   const confidence = document.getElementById('confidence');
-  let side = 'R';
-  const API_BASE = (window.MLB_PREDICTOR_API_BASE || '').replace(/\/$/, '');
 
-  for (let b=0;b<=3;b++) for (let s=0;s<=2;s++) {
-    const o = document.createElement('option'); o.value = `${b}-${s}`; o.textContent = `${b}-${s}`; countEl.appendChild(o);
+  let side = 'R';
+
+  const API_BASE =
+    (window.MLB_PREDICTOR_API_BASE || '').replace(/\/$/, '');
+
+  for (let b = 0; b <= 3; b++) {
+    for (let s = 0; s <= 2; s++) {
+
+      const o = document.createElement('option');
+
+      o.value = `${b}-${s}`;
+      o.textContent = `${b}-${s}`;
+
+      countEl.appendChild(o);
+    }
   }
 
-  document.querySelectorAll('[data-side]').forEach(btn => btn.addEventListener('click', () => {
-    side = btn.dataset.side;
-    document.querySelectorAll('[data-side]').forEach(b => b.classList.toggle('active', b === btn));
-  }));
+  document.querySelectorAll('[data-side]').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      side = btn.dataset.side;
+
+      document.querySelectorAll('[data-side]').forEach(b => {
+        b.classList.toggle('active', b === btn);
+      });
+
+    });
+
+  });
 
   async function loadPitchers() {
+
     try {
-      const res = await fetch(`${API_BASE}/api/pitchers`);
-      if (!res.ok) throw new Error((await res.json()).detail || 'Could not load pitchers');
-      const data = await res.json();
-      pitcherEl.innerHTML = '<option value="">Select pitcher…</option>';
+
+      const res =
+        await fetch(`${API_BASE}/api/pitchers`);
+
+      if (!res.ok) {
+        throw new Error(
+          (await res.json()).detail ||
+          'Could not load pitchers'
+        );
+      }
+
+      const data =
+        await res.json();
+
+      pitcherEl.innerHTML =
+        '<option value="">Select pitcher…</option>';
+
       data.pitchers.forEach(p => {
-        const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; pitcherEl.appendChild(o);
+
+        const o =
+          document.createElement('option');
+
+        o.value = p.id;
+        o.textContent = p.name;
+
+        pitcherEl.appendChild(o);
+
       });
-    } catch (e) {
-      pitcherEl.innerHTML = '<option>Could not load pitchers</option>';
-      chartSubtitle.textContent = e.message;
-      chartSubtitle.classList.add('error');
+
     }
+
+    catch (e) {
+
+      pitcherEl.innerHTML =
+        '<option>Could not load pitchers</option>';
+
+      chartSubtitle.textContent =
+        e.message;
+
+      chartSubtitle.classList.add('error');
+
+    }
+
   }
 
   function color(i) {
-    const colors = ['#3ba7e8','#43c59e','#f6bd60','#d889e8','#ef767a','#7b9acc','#8ec07c','#f4a261','#70d6ff','#b8b8ff'];
+
+    const colors = [
+      '#3ba7e8',
+      '#43c59e',
+      '#f6bd60',
+      '#d889e8',
+      '#ef767a',
+      '#7b9acc',
+      '#8ec07c',
+      '#f4a261',
+      '#70d6ff',
+      '#b8b8ff'
+    ];
+
     return colors[i % colors.length];
+
   }
 
   function renderBubbles(pitches) {
+
     svg.innerHTML = '';
+
     if (!pitches.length) {
-      svg.hidden = true; empty.hidden = false; empty.innerHTML = 'No pitches were found for this exact split. Try another count or batter side.'; return;
-    }
-    empty.hidden = true; svg.hidden = false;
-    const W=760, H=410, pad=28;
-    const max = Math.max(...pitches.map(p => p.probability));
-    const nodes = pitches.slice(0,10).map((p,i) => ({...p, r: Math.max(28, 92*Math.sqrt(p.probability/max)), x: W/2, y:H/2}));
 
-    // Deterministic spiral start + simple collision relaxation keeps the chart dependency-free.
-    nodes.forEach((n,i) => { const a=i*2.35; const d=45+25*i; n.x=W/2+Math.cos(a)*d; n.y=H/2+Math.sin(a)*d*.62; });
-    for (let iter=0; iter<180; iter++) {
-      for (let i=0;i<nodes.length;i++) {
-        const a=nodes[i]; a.x += (W/2-a.x)*0.004; a.y += (H/2-a.y)*0.004;
-        for (let j=i+1;j<nodes.length;j++) {
-          const b=nodes[j]; let dx=b.x-a.x, dy=b.y-a.y; let dist=Math.hypot(dx,dy)||0.1; const min=a.r+b.r+6;
-          if (dist<min) { const push=(min-dist)/2; dx/=dist; dy/=dist; a.x-=dx*push; a.y-=dy*push; b.x+=dx*push; b.y+=dy*push; }
-        }
-        a.x=Math.max(pad+a.r,Math.min(W-pad-a.r,a.x)); a.y=Math.max(pad+a.r,Math.min(H-pad-a.r,a.y));
-      }
+      svg.hidden = true;
+
+      empty.hidden = false;
+
+      empty.innerHTML =
+        'No pitches were found for this exact split. Try another count or batter side.';
+
+      return;
+
     }
 
-    nodes.forEach((n,i) => {
-      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-      const c=document.createElementNS('http://www.w3.org/2000/svg','circle'); c.setAttribute('cx',n.x); c.setAttribute('cy',n.y); c.setAttribute('r',n.r); c.setAttribute('fill',color(i)); c.setAttribute('class','bubble');
-      const title=document.createElementNS('http://www.w3.org/2000/svg','title'); title.textContent=`${n.name}: ${n.probability}% (${n.count} pitches)`; c.appendChild(title); g.appendChild(c);
-      const t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('x',n.x); t.setAttribute('y',n.y-2); t.setAttribute('class','bubble-label'); t.setAttribute('font-size', n.r>55?'18':'14'); t.textContent=n.code; g.appendChild(t);
-      const p=document.createElementNS('http://www.w3.org/2000/svg','text'); p.setAttribute('x',n.x); p.setAttribute('y',n.y+19); p.setAttribute('class','bubble-sub'); p.textContent=`${n.probability}%`; g.appendChild(p);
-      svg.appendChild(g);
+    empty.hidden = true;
+    svg.hidden = false;
+
+    const W = 760;
+    const H = 410;
+    const pad = 28;
+
+    const max =
+      Math.max(...pitches.map(p => p.probability));
+
+    const nodes =
+      pitches
+        .slice(0, 10)
+        .map((p, i) => ({
+          ...p,
+          r: Math.max(
+            28,
+            92 * Math.sqrt(p.probability / max)
+          ),
+          x: W / 2,
+          y: H / 2
+        }));
+
+    nodes.forEach((n, i) => {
+
+      const a = i * 2.35;
+      const d = 45 + 25 * i;
+
+      n.x =
+        W / 2 +
+        Math.cos(a) * d;
+
+      n.y =
+        H / 2 +
+        Math.sin(a) * d * .62;
+
     });
+
+    for (let iter = 0; iter < 180; iter++) {
+
+      for (let i = 0; i < nodes.length; i++) {
+
+        const a = nodes[i];
+
+        a.x +=
+          (W / 2 - a.x) * 0.004;
+
+        a.y +=
+          (H / 2 - a.y) * 0.004;
+
+        for (let j = i + 1; j < nodes.length; j++) {
+
+          const b = nodes[j];
+
+          let dx = b.x - a.x;
+          let dy = b.y - a.y;
+
+          let dist =
+            Math.hypot(dx, dy) || 0.1;
+
+          const min =
+            a.r + b.r + 6;
+
+          if (dist < min) {
+
+            const push =
+              (min - dist) / 2;
+
+            dx /= dist;
+            dy /= dist;
+
+            a.x -= dx * push;
+            a.y -= dy * push;
+
+            b.x += dx * push;
+            b.y += dy * push;
+
+          }
+
+        }
+
+        a.x =
+          Math.max(
+            pad + a.r,
+            Math.min(
+              W - pad - a.r,
+              a.x
+            )
+          );
+
+        a.y =
+          Math.max(
+            pad + a.r,
+            Math.min(
+              H - pad - a.r,
+              a.y
+            )
+          );
+
+      }
+
+    }
+
+    nodes.forEach((n, i) => {
+
+      const g =
+        document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'g'
+        );
+
+      const c =
+        document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'circle'
+        );
+
+      c.setAttribute('cx', n.x);
+      c.setAttribute('cy', n.y);
+      c.setAttribute('r', n.r);
+      c.setAttribute('fill', color(i));
+      c.setAttribute('class', 'bubble');
+
+      const title =
+        document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'title'
+        );
+
+      title.textContent =
+        `${n.name}: ${n.probability}% (${n.count} pitches)`;
+
+      c.appendChild(title);
+
+      g.appendChild(c);
+
+      const t =
+        document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'text'
+        );
+
+      t.setAttribute('x', n.x);
+      t.setAttribute('y', n.y - 2);
+      t.setAttribute('class', 'bubble-label');
+
+      t.setAttribute(
+        'font-size',
+        n.r > 55 ? '18' : '14'
+      );
+
+      t.textContent =
+        n.code;
+
+      g.appendChild(t);
+
+      const p =
+        document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'text'
+        );
+
+      p.setAttribute('x', n.x);
+      p.setAttribute('y', n.y + 19);
+      p.setAttribute('class', 'bubble-sub');
+
+      p.textContent =
+        `${n.probability}%`;
+
+      g.appendChild(p);
+
+      svg.appendChild(g);
+
+    });
+
   }
 
   function renderList(pitches) {
-    if (!pitches.length) { list.innerHTML='<div class="muted">No exact-split data.</div>'; return; }
-    list.innerHTML='';
+
+    if (!pitches.length) {
+
+      list.innerHTML =
+        '<div class="muted">No exact-split data.</div>';
+
+      return;
+
+    }
+
+    list.innerHTML = '';
+
     pitches.forEach(p => {
-      const row=document.createElement('div'); row.className='pitch-row';
-      const details=document.createElement('div'); details.innerHTML=`<div class="pitch-name">${p.name} <span class="muted">(${p.code})</span></div><div class="pitch-meta">${p.count} pitches${p.avg_velocity ? ` · ${p.avg_velocity} mph avg` : ''}</div>`;
-      const pct=document.createElement('div'); pct.className='pct'; pct.textContent=`${p.probability}%`;
-      row.append(details,pct); list.appendChild(row);
+
+      const row =
+        document.createElement('div');
+
+      row.className =
+        'pitch-row';
+
+      const details =
+        document.createElement('div');
+
+      details.innerHTML =
+        `<div class="pitch-name">
+          ${p.name}
+          <span class="muted">
+            (${p.code})
+          </span>
+        </div>
+
+        <div class="pitch-meta">
+          ${p.count} pitches
+          ${
+            p.avg_velocity
+              ? ` · ${p.avg_velocity} mph avg`
+              : ''
+          }
+        </div>`;
+
+      const pct =
+        document.createElement('div');
+
+      pct.className =
+        'pct';
+
+      pct.textContent =
+        `${p.probability}%`;
+
+      row.append(
+        details,
+        pct
+      );
+
+      list.appendChild(row);
+
     });
+
   }
 
-  predictBtn.addEventListener('click', async () => {
-    if (!pitcherEl.value) { chartSubtitle.textContent='Choose a pitcher first.'; return; }
-    const [balls,strikes]=countEl.value.split('-');
-    predictBtn.disabled=true; predictBtn.textContent='Loading Savant…';
-    chartSubtitle.classList.remove('error'); chartSubtitle.textContent='Retrieving Statcast pitches…';
-    try {
-      const params=new URLSearchParams({pitcher_id:pitcherEl.value,batter_stands:side,balls,strikes});
-      const res=await fetch(`${API_BASE}/api/predict?`+params.toString());
-      const data=await res.json(); if(!res.ok) throw new Error(data.detail||'Prediction failed');
-      const displayName = pitcherEl.options[pitcherEl.selectedIndex].text;
-      chartTitle.textContent=`${displayName} · ${balls}-${strikes} vs ${side === 'L' ? 'LHB' : 'RHB'}`;
-      chartSubtitle.textContent=`${data.sample_size} matching pitches in ${data.season}. Bubble area represents pitch probability.`;
-      sample.textContent=data.sample_size; confidence.textContent=data.confidence.toUpperCase(); topPitch.textContent=data.pitches[0]?.code||'—';
-      renderBubbles(data.pitches); renderList(data.pitches);
-    } catch(e) {
-      chartSubtitle.textContent=e.message; chartSubtitle.classList.add('error');
-    } finally { predictBtn.disabled=false; predictBtn.textContent='Predict pitch'; }
-  });
+  predictBtn.addEventListener(
+    'click',
+    async () => {
+
+      if (!pitcherEl.value) {
+
+        chartSubtitle.textContent =
+          'Choose a pitcher first.';
+
+        return;
+
+      }
+
+      const [balls, strikes] =
+        countEl.value.split('-');
+
+      predictBtn.disabled =
+        true;
+
+      predictBtn.textContent =
+        'Loading Savant…';
+
+      chartSubtitle.classList.remove(
+        'error'
+      );
+
+      chartSubtitle.textContent =
+        'Retrieving Statcast pitches…';
+
+      try {
+
+        const params =
+          new URLSearchParams({
+            pitcher_id:
+              pitcherEl.value,
+            batter_stands:
+              side,
+            balls,
+            strikes
+          });
+
+        const res =
+          await fetch(
+            `${API_BASE}/api/predict?` +
+            params.toString()
+          );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+          throw new Error(
+            data.detail ||
+            'Prediction failed'
+          );
+        }
+
+        const displayName =
+          pitcherEl.options[
+            pitcherEl.selectedIndex
+          ].text;
+
+        chartTitle.textContent =
+          `${displayName} · ${balls}-${strikes} vs ${
+            side === 'L'
+              ? 'LHB'
+              : 'RHB'
+          }`;
+
+        chartSubtitle.textContent =
+          `${data.sample_size} matching pitches in ${data.season}. Bubble area represents pitch probability.`;
+
+        sample.textContent =
+          data.sample_size;
+
+        confidence.textContent =
+          data.confidence.toUpperCase();
+
+        topPitch.textContent =
+          data.pitches[0]?.code ||
+          '—';
+
+        renderBubbles(
+          data.pitches
+        );
+
+        renderList(
+          data.pitches
+        );
+
+      }
+
+      catch (e) {
+
+        chartSubtitle.textContent =
+          e.message;
+
+        chartSubtitle.classList.add(
+          'error'
+        );
+
+      }
+
+      finally {
+
+        predictBtn.disabled =
+          false;
+
+        predictBtn.textContent =
+          'Predict pitch';
+
+      }
+
+    }
+  );
 
   loadPitchers();
+
 })();
 </script>
+
 </body>
 </html>
